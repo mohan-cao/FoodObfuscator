@@ -10,7 +10,6 @@ import soot.jbco.jimpleTransformations.FieldRenamer;
 import soot.options.Options;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,9 +19,9 @@ public class FoodObfuscator extends DefaultTask {
     private File inputFile;
     private File outputFile;
     @Optional
-    private int androidVersion;
+    private Integer androidVersion;
     @Optional
-    private File androidJar;
+    private File androidHomePlatformsFolder;
     @Optional
     private Boolean useTempFile = true;
     @Optional
@@ -47,21 +46,21 @@ public class FoodObfuscator extends DefaultTask {
     }
 
     @Input
-    public int getAndroidVersion() {
+    public Integer getAndroidVersion() {
         return androidVersion;
     }
 
-    public void setAndroidVersion(int androidVersion) {
+    public void setAndroidVersion(Integer androidVersion) {
         this.androidVersion = androidVersion;
     }
 
     @Input
-    public File getAndroidJar() {
-        return androidJar;
+    public File getAndroidHomePlatformsFolder() {
+        return androidHomePlatformsFolder;
     }
 
-    public void setAndroidJar(File androidJar) {
-        this.androidJar = androidJar;
+    public void setAndroidHomePlatformsFolder(File androidHomePlatformsFolder) {
+        this.androidHomePlatformsFolder = androidHomePlatformsFolder;
     }
 
     @InputFile
@@ -89,15 +88,30 @@ public class FoodObfuscator extends DefaultTask {
         File outputDir = this.outputFile.getParentFile();
         if (useTempFile) outputDir = Files.createTempDir();
 
-        File androidJar = findSystemAndroidJar();
+        File androidHome = findSystemAndroidHomePlatformsFolder();
         File javaRTJar = findSystemRuntimeJar();
+
+        // Set android settings
+        if (androidHome != null) {
+            System.out.println("Found Android SDK platforms folder in " + androidHome.getAbsolutePath());
+            Options.v().set_android_jars(androidHome.getAbsolutePath());
+        } else if (this.androidHomePlatformsFolder != null) {
+            Options.v().set_android_jars(this.androidHomePlatformsFolder.getAbsolutePath());
+        } else {
+            throw new RuntimeException("No android SDK platforms folder found! Please specify via androidHomePlatformsFolder");
+        }
+        if (androidVersion != null) {
+            Options.v().set_android_api_version(androidVersion);
+        }
+
+        // Set optional Java runtime jar settings
+        if (javaRTJar != null && useRTJar) {
+            System.out.println("Found Java rt.jar in " + javaRTJar.getAbsolutePath());
+            Options.v().set_soot_classpath(javaRTJar.getAbsolutePath()+":"+Scene.v().defaultClassPath());
+        }
 
         Options.v().set_src_prec(Options.src_prec_apk);
         Options.v().set_whole_program(true);
-        Options.v().set_android_jars(
-                (this.androidJar != null) ? this.androidJar.getParentFile().getAbsolutePath() : Objects.requireNonNull(androidJar).getParentFile().getAbsolutePath()
-        );
-        if (javaRTJar != null && useRTJar) Options.v().set_soot_classpath(javaRTJar.getAbsolutePath()+":"+Scene.v().defaultClassPath());
         Options.v().set_process_dir(Collections.singletonList(inputFile.getAbsolutePath()));
         Options.v().set_process_multiple_dex(true);
         Options.v().set_output_format(Options.output_format_dex);
@@ -130,10 +144,11 @@ public class FoodObfuscator extends DefaultTask {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            System.out.println("Successfully moved APK to " + this.outputFile);
         });
     }
 
-    @Deprecated
+    /*@Deprecated
     public static void main(String[] args) {
         Options.v().set_src_prec(Options.src_prec_apk);
         Options.v().set_whole_program(true);
@@ -174,33 +189,15 @@ public class FoodObfuscator extends DefaultTask {
 
         PackManager.v().runPacks();
         if (!Options.v().oaat()) PackManager.v().writeOutput();
-    }
+    }*/
 
-    protected static File findSystemAndroidJar() {
-
+    protected static File findSystemAndroidHomePlatformsFolder() {
         //resolve system android-platforms location
         File androidHome = new File(resolveEnv("ANDROID_HOME", "ANDROID_SDK_ROOT") + "/platforms/");
-
-        File[] androidJarDirectories = androidHome.listFiles(pathname -> pathname.isDirectory() && pathname.getName().contains("android-"));
-
-        return Arrays.stream(Objects.requireNonNull(androidJarDirectories))
-                .max((o1, o2) -> {
-                    int int1,int2;
-                    try {
-                        int1 = Integer.parseInt(o1.getName().replace("android-",""));
-                    } catch (NumberFormatException nfe) {
-                        return -1;
-                    }
-                    try {
-                        int2 = Integer.parseInt(o2.getName().replace("android-",""));
-                    } catch (NumberFormatException nfe) {
-                        return 1;
-                    }
-                    return int1 - int2;
-                })
-                .map(x -> new File(x.getAbsolutePath()+"/android.jar"))
-                .filter(File::exists).orElse(null);
-
+        if (androidHome.exists()) {
+            return androidHome;
+        }
+        return null;
     }
 
     protected static File findSystemRuntimeJar() {

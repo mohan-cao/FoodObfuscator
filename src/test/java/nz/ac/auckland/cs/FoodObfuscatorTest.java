@@ -3,8 +3,6 @@ package nz.ac.auckland.cs;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -33,33 +31,9 @@ public class FoodObfuscatorTest {
     }
 
     @Test
-    public void findNewestAndroidJar() {
-        File systemJar = FoodObfuscator.findSystemAndroidJar();
-        assumeNotNull(systemJar);
-        assertTrue(systemJar.exists());
-
-        File[] androidJarDirectories = new File(FoodObfuscator.resolveEnv("ANDROID_HOME", "ANDROID_SDK_ROOT") + "/platforms/")
-                .listFiles(pathname -> pathname.isDirectory() && pathname.getName().contains("android-"));
-        assertTrue(androidJarDirectories != null && androidJarDirectories.length > 0);
-
-        Optional<File> jar = Arrays.stream(androidJarDirectories)
-                // get the newest version android platform jar
-                .max((a, b) -> {
-                    int int1,int2;
-                    try {
-                        int1 = Integer.parseInt(a.getName().replace("android-",""));
-                    } catch (NumberFormatException nfe) {
-                        return -1;
-                    }
-                    try {
-                        int2 = Integer.parseInt(b.getName().replace("android-",""));
-                    } catch (NumberFormatException nfe) {
-                        return 1;
-                    }
-                    return int1 - int2;
-                })
-                .map(x -> new File(x.getAbsolutePath()+"/android.jar"))
-                .filter(File::exists);
-        assertTrue(jar.isPresent());
+    public void findNewestAndroidJarDirectory() {
+        File homePlatformsFolder = FoodObfuscator.findSystemAndroidHomePlatformsFolder();
+        assumeNotNull(homePlatformsFolder);
+        assertTrue(homePlatformsFolder.exists());
     }
 }
