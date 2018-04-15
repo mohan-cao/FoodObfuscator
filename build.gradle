@@ -1,0 +1,66 @@
+buildscript {
+    repositories {
+        maven {
+            name "soot-release"
+            url "https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-release"
+        }
+        maven {
+            name "soot-snapshot"
+            url "https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-snapshot"
+        }
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        //classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
+    }
+}
+
+plugins {
+    id 'java-gradle-plugin'
+}
+
+group 'nz.ac.auckland.cs'
+version '1.0.0'
+
+apply plugin: 'java'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.8
+
+gradlePlugin {
+    plugins {
+        FoodObfuscator {
+            id = 'nz.ac.auckland.foodobfuscator'
+            implementationClass = 'nz.ac.auckland.cs.FoodObfuscatorPlugin'
+        }
+    }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: uri('../repo'))
+        }
+    }
+}
+
+repositories {
+    maven {
+        name "soot-release"
+        url "https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-release"
+    }
+    maven {
+        name "soot-snapshot"
+        url "https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-snapshot"
+    }
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    localGroovy()
+    gradleApi()
+    implementation 'ca.mcgill.sable:soot:3.0.0'
+    testCompile 'junit:junit:4.12'
+}
