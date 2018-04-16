@@ -1,5 +1,5 @@
 # FoodObfuscator
-An APK/DEX post-processing obfuscator, using the [Soot Framework](https://github.com/Sable/soot)
+An APK post-processing obfuscator, using the [Soot Framework](https://github.com/Sable/soot)
 
 ## Usage
 Very easy to use, hooks onto any non-DSL task.
