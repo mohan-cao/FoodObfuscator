@@ -1,3 +1,7 @@
+<div align="center">
+<a href="https://github.com/mohan-cao/FoodObfuscator"><img style="display:inline-block" src="./foodobfuscator logo.png" alt="logo"></a>
+</div>
+
 # FoodObfuscator
 An APK post-processing obfuscator, using the [Soot Framework](https://github.com/Sable/soot)
 
